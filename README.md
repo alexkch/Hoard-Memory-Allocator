@@ -1,8 +1,8 @@
 # Hoard-Memory-Allocator
 
-a2alloc.c - Hoard-Memory-Allocator\n
+a2alloc.c - Hoard-Memory-Allocator
 
-Written by Alex (Kao-Tsun) Chang\n
+Written by Alex (Kao-Tsun) Chang
 
 alexx.chang@mail.utoronto.ca || alexc0219@gmail.com
 
