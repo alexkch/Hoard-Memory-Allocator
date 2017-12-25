@@ -1,0 +1,12 @@
+define pp
+  set var $i = 1
+  set var $n = $arg0
+    while $n
+        printf "%d: OWNER: %d Sblk: %p USED: %d @power %d\n", $i, $n->owner->id, $n, $n->used, $n->power
+        set var $n = $n->next
+        set var $i = $i + 1
+    end
+end
+
+
+pp HEAPS[2]->superblocks[0][0]

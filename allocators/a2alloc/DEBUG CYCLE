@@ -1,0 +1,99 @@
+
+/* For Debugging 
+static int cycle = 0;
+static int malloc_cycle = 0;
+static int malloc_cycle_8 = 0;
+static int malloc_cycle_16 = 0;
+static int malloc_cycle_32 = 0;
+static int malloc_cycle_64 = 0;
+static int malloc_cycle_128 = 0;
+static int malloc_cycle_256 = 0;
+static int malloc_cycle_512 = 0;
+static int malloc_cycle_1024 = 0;
+static int malloc_cycle_2048 = 0;
+static int malloc_cycle_4096 = 0;
+
+static int mcreatesblk = 0;
+static int mtakefromglobal = 0;
+static int maddtoexist = 0;
+static int mmovebin = 0;
+
+static int free_cycle = 0;
+static int free_cycle_8 = 0;
+static int free_cycle_16 = 0;
+static int free_cycle_32 = 0;
+static int free_cycle_64 = 0;
+static int free_cycle_128 = 0;
+static int free_cycle_256 = 0;
+static int free_cycle_512 = 0;
+static int free_cycle_1024 = 0;
+static int free_cycle_2048 = 0;
+static int free_cycle_4096 = 0;
+
+
+static int ftransfer = 0;
+static int fmovebin = 0;
+
+*/
+
+
+
+
+/*
+
+void debugcycle(int size) { malloc_cycle++; cycle ++; if (size <= 8) { malloc_cycle_8++; } else if (size <= 16) { malloc_cycle_16++; } else if (size <= 32) { malloc_cycle_32++;} else if (size <= 64 ) { malloc_cycle_64++;} else if (size <= 128) { malloc_cycle_128++;} else if (size <= 256) {malloc_cycle_256++;} else if (size <= 512) {malloc_cycle_512++;} else if (size <= 1024) {malloc_cycle_1024++;} else if (size <= 2048) {malloc_cycle_2048++;}}
+
+void debugcycle2(int x) { if (x == 1) { mcreatesblk++; } else if (x == 2) { mtakefromglobal++; } else if (x == 3) { maddtoexist++;} else if (x == 4 ) { mmovebin++;}}
+
+void debugcycle3(int size) { if (size <= 8) { free_cycle_8++; } else if (size <= 16) { free_cycle_16++; } else if (size <= 32) { free_cycle_32++;} else if (size <= 64 ) { free_cycle_64++;} else if (size <= 128) { free_cycle_128++;} else if (size <= 256) {free_cycle_256++;} else if (size <= 512) {free_cycle_512++;} else if (size <= 1024) {free_cycle_1024++;} else if (size <= 1024) {free_cycle_2048++;} else if (size <= 1024) {free_cycle_4096++;} }
+
+void debugcycle4(int x) { if (x == 1) { fmovebin++; } else if (x == 2) { ftransfer++; }} 
+
+*/
+
+
+
+int try_transfer_superblock(heap * target_heap) {
+    
+    heap * global_heap = &HEAPS[0]; 
+    superblock * current;
+    superblock * prev;
+    int min_bin_idx = 2;
+    int size_idx;
+    
+    
+    for (size_idx = 0; size_idx < SZCLASS; size_idx++) {
+    
+        current = target_heap->superblocks[min_bin_idx][size_idx];
+        prev = NULL;
+        
+        while (current) {
+            
+            if (trylock_superblock(current) == 0) {
+                
+                target_heap->allocated -= SBLKSZ;
+                target_heap->used -= current->used;
+                global_heap->allocated += SBLKSZ;                
+                global_heap->used += current->used;
+                current->owner = global_heap;
+                lock_global(1);
+                if (prev) {
+                    prev->next = current->next;
+                    current->next = global_heap->superblocks[min_bin_idx][size_idx];
+                    global_heap->superblocks[min_bin_idx][size_idx] = current;
+                }
+                else {
+                    target_heap->superblocks[min_bin_idx][size_idx] = current->next;
+                    current->next = global_heap->superblocks[min_bin_idx][size_idx];
+                    global_heap->superblocks[min_bin_idx][size_idx] = current;      
+                }
+                unlock_global(1);
+                unlock_superblock(current);
+                return 0;
+            }
+            prev = current;
+            current = current->next;
+        }
+    }
+    return 1;
+}
